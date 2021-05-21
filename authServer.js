@@ -10,8 +10,8 @@ const fs = require('fs');
 
 //https config
 const options = {
-    key: fs.readFileSync('certificate/key.pem'),
-    cert: fs.readFileSync('certificate/cert.pem')
+    key: fs.readFileSync('certificate/key.pem', 'utf8'),
+    cert: fs.readFileSync('certificate/cert.pem', 'utf8')
 };
 
 //DB schemas
@@ -138,9 +138,8 @@ authServer.delete('/logout', (req, res) => {
 
 const start = () => {
     try {
-        https.createServer(options, authServer).listen(Number(PORT), () => {
-            console.log(`Server started on port ${PORT}`);
-        })
+        const httpsServer = https.createServer(options, authServer);
+	httpsServer.listen(Number(PORT));
     }
     catch (e){
         console.log(e);
