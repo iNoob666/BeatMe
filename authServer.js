@@ -5,6 +5,14 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
 const { check, validationResult } = require('express-validator');
+const https = require('https');
+const fs = require('fs');
+
+//https config
+const options = {
+    key: fs.readFileSync('certificate/key.pem'),
+    cert: fs.readFileSync('certificate/cert.pem')
+};
 
 //DB schemas
 const User = require('./models/user');
@@ -130,7 +138,7 @@ authServer.delete('/logout', (req, res) => {
 
 const start = () => {
     try {
-        authServer.listen(PORT, () => {
+        https.createServer(options, authServer).listen(Number(PORT), () => {
             console.log(`Server started on port ${PORT}`);
         })
     }
