@@ -4,9 +4,9 @@ const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
-const { check, validationResult } = require('express-validator');
 const https = require('https');
 const fs = require('fs');
+const { check, validationResult } = require("express-validator");
 
 //https config
 const { CertificateKey } = require('./config/keys');
@@ -20,6 +20,7 @@ const options = {
 const User = require('./models/user');
 const Token = require('./models/token');
 const Role = require('./models/role');
+const PassCode = require('./models/passcode');
 
 //jwt secret key
 const { TokenSecret } = require('./config/keys');
@@ -60,7 +61,7 @@ function generateRefreshToken(id, roles){
 
 authServer.post('/token', async (req, res) => {
     try{
-        const refreshToken = req.headers.authorization.split(' ')[1];
+        const refreshToken = req.body.token;
         if(!refreshToken){
             return res.sendStatus(401).json({message: "Обновляющий токен пуст"});
         }
@@ -68,7 +69,7 @@ authServer.post('/token', async (req, res) => {
         if(!validToken){
             return res.sendStatus(401).json({message: "Обновляющий токен не найден среди активных клиентов"});
         }
-        jwt.verify(refreshToken, tokenSecret, (err, user) => {
+        jwt.verify(refreshToken, TokenSecret, (err, user) => {
             if(err){
                 return res.sendStatus(401).json({message: "Обновляющий токен не прошел верификацию"});
             }
@@ -82,12 +83,45 @@ authServer.post('/token', async (req, res) => {
     }
 });
 
+authServer.post('/phone', async (req, res) => {
+    const { phoneNumb } = req.body;
+    const user = await User.findOne({ phone: phoneNumb });
+    if(!user){
+        //Если пользователь не существует
+        //отправка смс с кодом
+
+        //заглушка
+        const passCode = "4444";
+        const hashPassCode = bcrypt.hashSync(passCode, 10);
+        const passcode = new PassCode({ phoneNumb: phoneNumb, hashPassCode: hashPassCode });
+        passcode.save();
+        res.json({ exist: false, phoneNumb: phoneNumb});
+    }
+    else {
+        res.json({ exist: true, phoneNumb: phoneNumb });
+    }
+});
+
+authServer.post('/passcode', async (req, res) => {
+    const { phoneNumb, passCode } = req.body;
+    const userPassCode = await  PassCode.findOne({ phoneNumb: phoneNumb });
+    if(!userPassCode){
+        return res.sendStatus(401).json({ message: "истек срок кода" });
+    }
+    const validPassCode = bcrypt.compareSync(passCode, userPassCode.hashPassCode);
+    if(!validPassCode){
+        return res.json({ confirm: false });
+    }
+    await PassCode.findByIdAndDelete(userPassCode._id);
+    return res.json( { confirm: true, phoneNumb: phoneNumb });
+});
+
 authServer.post('/login', async (req, res) => {
     try {
-        const { username, password } = req.body;
-        const user = await User.findOne({ username: username })
+        const { phoneNumb, password } = req.body;
+        const user = await User.findOne({ phoneNumb: phoneNumb })
         if(!user){
-            return res.sendStatus(401).json({message: `Пользователя с именем ${username} не существует`})
+            return res.sendStatus(401).json({message: `Пользователя с номером ${phoneNumb} не существует`})
         }
         const validPassword = bcrypt.compareSync(password, user.password);
 
@@ -107,25 +141,41 @@ authServer.post('/login', async (req, res) => {
     }
 });
 
-authServer.post('/register',
-    check('username', 'Имя пользователя не может быть пустым').notEmpty(),
-    check('password', 'Пароль должен быть больше 6 и меньше 32 символов').isLength({min: 6, max: 32})
-, async (req, res) => {
+authServer.post('/register',[
+    check("username", "invalid username")
+        .isLength({ min: 3, max: 16 }).withMessage('Имя пользователя должно быть от 3 до 16 знаков')
+        .bail()
+        .matches(/^[A-Za-z\s]+$/).withMessage('Имя пользователя должно быть на Английском языке')
+        .bail(),
+    check("password")
+        .isLength({ min: 6, max: 32 }).withMessage('Пароль должен быть от 6 до 32 знаков')
+        .bail()
+        .custom((value,{req, loc, path}) => {
+            if (value !== req.body.confirmedPass) {
+                // trow error if passwords do not match
+                throw new Error("Passwords don't match");
+            } else {
+                return value;
+            }
+        }).withMessage('Пароли должны совпадать')
+], async (req, res) => {
     try {
         const errors = validationResult(req);
-        if(!errors){
-            return res.sendStatus(401).json({message: 'Ошибки заполнения полей'});
+        if(errors){
+            return res.json(errors);
         }
-        const { username, password } = req.body;
+
+        const { phoneNumb, username, password } = req.body;
+
         const candidate = await User.findOne({username});
         if(candidate){
             return res.sendStatus(401).json({message: "Пользователь с таким именем уже существует"});
         }
         const hashPassword = bcrypt.hashSync(password, 10);
         const userRole = await Role.findOne({value: "USER"});
-        const newUser = new User({username, password: hashPassword, roles:[userRole.value]});
+        const newUser = new User({username: username, phoneNumb: phoneNumb, password: hashPassword, roles:[userRole.value]});
         await newUser.save();
-        return res.json({message: "Пользователь успешно зарегистрирован"});
+        return res.sendStatus(200);
     }
     catch (err){
         console.log(err);
@@ -133,8 +183,15 @@ authServer.post('/register',
     }
 });
 
-authServer.delete('/logout', (req, res) => {
+authServer.delete('/logout', async (req, res) => {
+    const refreshToken = req.body.token;
 
+    await Token.deleteOne({token: refreshToken}, (err, token) => {
+        if(err) {
+            return res.sendStatus(401).json({message: "Не удалось закончить сессию"});
+        }
+        res.sendStatus(200);
+    });
 });
 
 
