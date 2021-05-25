@@ -1,6 +1,7 @@
 //packages
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors')
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const bodyParser = require('body-parser');
@@ -27,6 +28,7 @@ const { TokenSecret } = require('./config/keys');
 
 //app initializing
 const authServer = express();
+authServer.use(cors())
 const PORT = process.env.PORT || 9000;
 
 //DB config
