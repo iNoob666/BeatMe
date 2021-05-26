@@ -9,9 +9,6 @@ const https = require('https');
 const fs = require('fs');
 const { check, validationResult } = require("express-validator");
 
-//passport
-//require('./config/passport-google');
-
 //https config
 const { CertificateKey } = require('./config/keys');
 const options = {
@@ -196,7 +193,15 @@ authServer.delete('/logout', async (req, res) => {
     });
 });
 
+authServer.use('/auth', require('./routes/auth/google'));
 
+authServer.get('/auth/success', (req, res) =>{
+    res.sendStatus(200);
+});
+
+authServer.get('/auth/failure', (req, res) =>{
+    res.sendStatus(401);
+});
 
 const httpsServer = https.createServer(options, authServer);
 httpsServer.listen(Number(PORT), () => {

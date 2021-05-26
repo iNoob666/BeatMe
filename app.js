@@ -17,7 +17,7 @@ const options = {
 //app initializing
 const app = express();
 app.use(cors())
-const PORT = process.env.SERVER_PORT || 9500;
+const PORT = process.env.SERVER_PORT || 443;
 
 //Body-parser
 app.use(bodyParser.json());
