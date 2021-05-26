@@ -9,7 +9,7 @@ router.get('/privacy_policy', (req, res) => {
 });
 
 router.get('/public_terms_of_service', (req, res) => {
-    res.sendFile(path.join(__dirname, '/../views/terms_of_service.html'));
+    res.sendFile(path.join(__dirname, '/../views/terms_of_services.html'));
 });
 
 module.exports = router;
