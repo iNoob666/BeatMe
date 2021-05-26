@@ -29,7 +29,7 @@ const { TokenSecret } = require('./config/keys');
 //app initializing
 const authServer = express();
 authServer.use(cors())
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.AUTH_PORT || 9000;
 
 //DB config
 const DB = require('./config/keys').MongoURI;
