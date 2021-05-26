@@ -10,7 +10,7 @@ const fs = require('fs');
 const { check, validationResult } = require("express-validator");
 
 //passport
-require('./config/passport-google');
+//require('./config/passport-google');
 
 //https config
 const { CertificateKey } = require('./config/keys');
@@ -163,7 +163,7 @@ authServer.post('/register',[
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
-        if(errors){
+        if(errors === null){
             return res.json(errors);
         }
 
