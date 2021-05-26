@@ -9,8 +9,8 @@ const mongoose = require('mongoose');
 //https config
 const { CertificateKey } = require('./config/keys');
 const options = {
-    key: fs.readFileSync('certificate/key.pem', 'utf8'),
-    cert: fs.readFileSync('certificate/cert.pem', 'utf8'),
+    key: fs.readFileSync('certificate/beatme_online.key', 'utf8'),
+    cert: fs.readFileSync('certificate/beatme_online.full.crt', 'utf8'),
     passphrase: CertificateKey
 };
 

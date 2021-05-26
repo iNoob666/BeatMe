@@ -9,6 +9,9 @@ const https = require('https');
 const fs = require('fs');
 const { check, validationResult } = require("express-validator");
 
+//passport
+require('./config/passport-google');
+
 //https config
 const { CertificateKey } = require('./config/keys');
 const options = {
@@ -146,12 +149,9 @@ authServer.post('/login', async (req, res) => {
 authServer.post('/register',[
     check("username", "invalid username")
         .isLength({ min: 3, max: 16 }).withMessage('Имя пользователя должно быть от 3 до 16 знаков')
-        .bail()
-        .matches(/^[A-Za-z\s]+$/).withMessage('Имя пользователя должно быть на Английском языке')
-        .bail(),
+        .matches(/^[A-Za-z\s]+$/).withMessage('Имя пользователя должно быть на Английском языке'),
     check("password")
         .isLength({ min: 6, max: 32 }).withMessage('Пароль должен быть от 6 до 32 знаков')
-        .bail()
         .custom((value,{req, loc, path}) => {
             if (value !== req.body.confirmedPass) {
                 // trow error if passwords do not match
