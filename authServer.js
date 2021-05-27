@@ -65,15 +65,15 @@ authServer.post('/token', async (req, res) => {
     try{
         const refreshToken = req.body.token;
         if(!refreshToken){
-            return res.sendStatus(401).json({message: "Обновляющий токен пуст"});
+            return res.json({message: "Обновляющий токен пуст"});
         }
         const validToken = await Token.findOne({token: refreshToken});
         if(!validToken){
-            return res.sendStatus(401).json({message: "Обновляющий токен не найден среди активных клиентов"});
+            return res.json({message: "Обновляющий токен не найден среди активных клиентов"});
         }
         jwt.verify(refreshToken, TokenSecret, (err, user) => {
             if(err){
-                return res.sendStatus(401).json({message: "Обновляющий токен не прошел верификацию"});
+                return res.json({message: "Обновляющий токен не прошел верификацию"});
             }
             const accessToken = generateAccessToken(user._id, user.roles);
             res.json({accessToken: accessToken});
@@ -81,13 +81,13 @@ authServer.post('/token', async (req, res) => {
     }
     catch (err){
         console.log(err);
-        res.sendStatus(401).json({message: "Не удалось обновить токен"});
+        res.json({message: "Не удалось обновить токен"});
     }
 });
 
 authServer.post('/phone', async (req, res) => {
     const { phoneNumb } = req.body;
-    const user = await User.findOne({ phone: phoneNumb });
+    const user = await User.findOne({ phoneNumb: phoneNumb });
     if(!user){
         //Если пользователь не существует
         //отправка смс с кодом
@@ -108,7 +108,7 @@ authServer.post('/passcode', async (req, res) => {
     const { phoneNumb, passCode } = req.body;
     const userPassCode = await  PassCode.findOne({ phoneNumb: phoneNumb });
     if(!userPassCode){
-        return res.sendStatus(401).json({ message: "истек срок кода" });
+        return res.json({ message: "истек срок кода" });
     }
     const validPassCode = bcrypt.compareSync(passCode, userPassCode.hashPassCode);
     if(!validPassCode){
@@ -123,12 +123,12 @@ authServer.post('/login', async (req, res) => {
         const { phoneNumb, password } = req.body;
         const user = await User.findOne({ phoneNumb: phoneNumb })
         if(!user){
-            return res.sendStatus(401).json({message: `Пользователя с номером ${phoneNumb} не существует`})
+            return res.json({message: `Пользователя с номером ${phoneNumb} не существует`});
         }
         const validPassword = bcrypt.compareSync(password, user.password);
 
         if(!validPassword){
-            return res.sendStatus(401).json({message: "Введен неверный пароль"});
+            return res.json({message: "Введен неверный пароль"});
         }
 
         const accessToken = generateAccessToken(user._id, user.roles);
@@ -139,23 +139,25 @@ authServer.post('/login', async (req, res) => {
     }
     catch (err){
         console.log(err);
-        res.sendStatus(401).json({message: "Не удалось войти в профиль пользователя"});
+        res.json({message: "Не удалось войти в профиль пользователя"});
     }
 });
 
 authServer.post('/register',[
     check("username", "invalid username")
+        .trim()
         .isLength({ min: 3, max: 16 }).withMessage('Имя пользователя должно быть от 3 до 16 знаков')
         .matches(/^[A-Za-z\s]+$/).withMessage('Имя пользователя должно быть на Английском языке'),
-    check("password")
+    check("confirmedPass")
+        .trim()
         .isLength({ min: 6, max: 32 }).withMessage('Пароль должен быть от 6 до 32 знаков')
-        .custom((value,{req, loc, path}) => {
-            if (value !== req.body.confirmedPass) {
+        .custom(async (confirmedPass,{req}) => {
+            const { password } = req.body;
+            if (confirmedPass !== password) {
                 // trow error if passwords do not match
                 throw new Error("Passwords don't match");
-            } else {
-                return value;
             }
+            return true;
         }).withMessage('Пароли должны совпадать')
 ], async (req, res) => {
     try {
@@ -165,10 +167,9 @@ authServer.post('/register',[
         }
 
         const { phoneNumb, username, password } = req.body;
-
-        const candidate = await User.findOne({username});
+        const candidate = await User.findOne({ username: username });
         if(candidate){
-            return res.sendStatus(401).json({message: "Пользователь с таким именем уже существует"});
+            return res.json({message: "Пользователь с таким именем уже существует"});
         }
         const hashPassword = bcrypt.hashSync(password, 10);
         const userRole = await Role.findOne({value: "USER"});
@@ -178,7 +179,7 @@ authServer.post('/register',[
     }
     catch (err){
         console.log(err);
-        res.sendStatus(401).json({message: "Не удалось зарегестрировать пользователя"});
+        res.json({message: "Не удалось зарегестрировать пользователя"});
     }
 });
 
@@ -187,21 +188,13 @@ authServer.delete('/logout', async (req, res) => {
 
     await Token.deleteOne({token: refreshToken}, (err, token) => {
         if(err) {
-            return res.sendStatus(401).json({message: "Не удалось закончить сессию"});
+            return res.json({message: "Не удалось закончить сессию"}).sendStatus(401);
         }
         res.sendStatus(200);
     });
 });
 
 authServer.use('/auth', require('./routes/auth/google'));
-
-authServer.get('/auth/success', (req, res) =>{
-    res.sendStatus(200);
-});
-
-authServer.get('/auth/failure', (req, res) =>{
-    res.sendStatus(401);
-});
 
 const httpsServer = https.createServer(options, authServer);
 httpsServer.listen(Number(PORT), () => {

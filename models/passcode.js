@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const PassCodeSchema = new mongoose.Schema({
     phoneNumb: {
         type: String,
-        unique: true,
         required: true
     },
     hashPassCode: {
