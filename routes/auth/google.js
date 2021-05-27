@@ -5,9 +5,10 @@ const router = express.Router();
 require('../../config/passport-google');
 
 router.get('/google/callback', (req, res) =>{
+    console.log("KEKW")
     passport.authenticate('google', {
         successRedirect: '/success',
-        failureRedirect: '/failure',
+        failureRedirect: '/failure'
     });
 });
 

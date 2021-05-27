@@ -10,7 +10,7 @@ passport.use(new GoogleStrategy({
         clientID:     GOOGLE_CLIENT_ID,
         clientSecret: GOOGLE_CLIENT_SECRET,
         callbackURL: "https://beatme.online:9000/auth/google/callback",
-        passReqToCallback   : true
+        passReqToCallback: true
     },
     function(request, accessToken, refreshToken, profile, done) {
         console.log(profile);

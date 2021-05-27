@@ -184,11 +184,11 @@ authServer.post('/register',[
 });
 
 authServer.delete('/logout', async (req, res) => {
-    const refreshToken = req.body.token;
+    const { refreshToken } = req.body;
 
-    await Token.deleteOne({token: refreshToken}, (err, token) => {
+    await Token.deleteOne({token: refreshToken}, (err) => {
         if(err) {
-            return res.json({message: "Не удалось закончить сессию"}).sendStatus(401);
+            return res.json({ message: "неверный токен" });
         }
         res.sendStatus(200);
     });
