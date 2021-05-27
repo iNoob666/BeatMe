@@ -1,24 +1,58 @@
 const express = require('express');
-const passport = require('passport');
 const router = express.Router();
+const { OAuth2Client } = require('google-auth-library');
+const jwt = require('jsonwebtoken');
 
-require('../../config/passport-google');
+const User = require('../../models/user');
+const Role = require('../../models/role');
+const Token = require('../../models/token');
 
-router.get('/google/callback', (req, res) =>{
-    console.log("KEKW")
-    passport.authenticate('google', {
-        successRedirect: '/success',
-        failureRedirect: '/failure'
-    });
-});
+const { TokenSecret } = require('../../config/keys')
 
-router.get('/success', (req, res) =>{
-    console.log("success");
-    res.sendStatus(200);
-});
+const GOOGLE_CLIENT_ID = '745917081582-981ajg99v9nitkoknac51sl8novc6lu4.apps.googleusercontent.com';
 
-router.get('/failure', (req, res) =>{
-    res.sendStatus(401);
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
+
+
+function generateAccessToken(id, roles){
+    const payload = {
+        id,
+        roles
+    };
+    return jwt.sign(payload, TokenSecret, { expiresIn: '3m' });
+}
+
+function generateRefreshToken(id, roles){
+    const payload = {
+        id,
+        roles
+    };
+    return jwt.sign(payload, TokenSecret);
+}
+
+router.post('/google', (req, res) =>{
+    const { idToken } = req.body;
+
+    client.verifyIdToken({idToken: idToken, audience: GOOGLE_CLIENT_ID})
+        .then(async (result) => {
+            const { email_verified, name, email } = result.payload;
+            if(email_verified){
+                const user = await User.findOne( { email: email });
+                if(user){
+                    const accessToken = generateAccessToken(user._id, user.roles);
+                    const refreshToken = generateRefreshToken(user._id, user.roles);
+                    const newToken = new Token({token: refreshToken});
+                    await newToken.save();
+                    return res.json({accessToken: accessToken, refreshToken: refreshToken})
+                }
+                else {
+                    const userRole = await Role.findOne({value: "USER"});
+                    const newUser = new User({ socialAccount: { type: "google", identity: email}, roles:[userRole.value]});
+                    await newUser.save();
+                    return res.sendStatus(200);
+                }
+            }
+        })
 });
 
 module.exports = router;

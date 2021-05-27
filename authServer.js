@@ -121,11 +121,11 @@ authServer.post('/passcode', async (req, res) => {
 authServer.post('/login', async (req, res) => {
     try {
         const { phoneNumb, password } = req.body;
-        const user = await User.findOne({ phoneNumb: phoneNumb })
+        const user = await User.findOne({ 'socialAccount.identity': phoneNumb });
         if(!user){
             return res.json({message: `Пользователя с номером ${phoneNumb} не существует`});
         }
-        const validPassword = bcrypt.compareSync(password, user.password);
+        const validPassword = bcrypt.compareSync(password, user.socialAccount.password);
 
         if(!validPassword){
             return res.json({message: "Введен неверный пароль"});
@@ -173,7 +173,7 @@ authServer.post('/register',[
         }
         const hashPassword = bcrypt.hashSync(password, 10);
         const userRole = await Role.findOne({value: "USER"});
-        const newUser = new User({username: username, phoneNumb: phoneNumb, password: hashPassword, roles:[userRole.value]});
+        const newUser = new User({ username: username, socialAccount: {type: "phone", identity: phoneNumb, password: hashPassword }, roles:[userRole.value]} );
         await newUser.save();
         return res.sendStatus(200);
     }
@@ -194,7 +194,7 @@ authServer.delete('/logout', async (req, res) => {
     });
 });
 
-authServer.use('/auth', require('./routes/auth/google'));
+authServer.post('/auth/google', require('./routes/auth/google'));
 
 const httpsServer = https.createServer(options, authServer);
 httpsServer.listen(Number(PORT), () => {
