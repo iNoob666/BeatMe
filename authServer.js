@@ -98,6 +98,7 @@ authServer.post('/phone', async (req, res) => {
     const { phoneNumb } = req.body;
     const user = await User.findOne({ 'socialAccount.identity': phoneNumb });
     if(!user){
+        const existPassCode = await PassCode.findOneAndDelete({phoneNumb:phoneNumb});
         //Если пользователь не существует
         //проверка баланса
         smsc.get_balance(async function (balance, raw, err, code) {
