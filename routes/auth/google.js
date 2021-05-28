@@ -33,23 +33,25 @@ function generateRefreshToken(id, roles){
 router.post('/google', (req, res) =>{
     const { idToken } = req.body;
 
+    console.log(idToken);
+
     client.verifyIdToken({idToken: idToken, audience: GOOGLE_CLIENT_ID})
         .then(async (result) => {
-            const { email_verified, name, email } = result.payload;
+            const { email_verified, email } = result.payload;
             if(email_verified){
-                const user = await User.findOne( { email: email });
+                const user = await User.findOne( { 'socialAccount.identity': email });
                 if(user){
                     const accessToken = generateAccessToken(user._id, user.roles);
                     const refreshToken = generateRefreshToken(user._id, user.roles);
                     const newToken = new Token({token: refreshToken});
                     await newToken.save();
-                    return res.json({accessToken: accessToken, refreshToken: refreshToken})
+                    return res.json({accessToken: accessToken, refreshToken: refreshToken});
                 }
                 else {
                     const userRole = await Role.findOne({value: "USER"});
-                    const newUser = new User({ socialAccount: { type: "google", identity: email}, roles:[userRole.value]});
+                    const newUser = new User({ username: email, socialAccount: { type: "google", identity: email}, roles:[userRole.value]});
                     await newUser.save();
-                    return res.sendStatus(200);
+                    return res.json({ email: email });
                 }
             }
         })

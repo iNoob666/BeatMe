@@ -194,7 +194,17 @@ authServer.delete('/logout', async (req, res) => {
     });
 });
 
-authServer.post('/auth/google', require('./routes/auth/google'));
+authServer.use('/auth', require('./routes/auth/google'));
+
+authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
+    const { email, username } = req.body;
+    const user = await User.findOneAndUpdate({ 'socialAccount.identity': email }, {username: username}, { new: true });
+    const accessToken = generateAccessToken(user._id, user.roles);
+    const refreshToken = generateRefreshToken(user._id, user.roles);
+    const newToken = new Token({token: refreshToken});
+    await newToken.save();
+    return res.json({accessToken: accessToken, refreshToken: refreshToken});
+});
 
 const httpsServer = https.createServer(options, authServer);
 httpsServer.listen(Number(PORT), () => {
