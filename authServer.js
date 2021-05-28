@@ -107,7 +107,7 @@ authServer.post('/phone', async (req, res) => {
             console.log(balance);
             //генерация кода
             const newPhoneNumb = phoneNumb.slice(1);
-            const passCode = String(Math.floor(Math.random()*10000));
+            const passCode = String(Math.floor(1000+Math.random()*9000));
             //отправка смс с кодом
             smsc.send_sms({
                 phones : [newPhoneNumb],
@@ -124,7 +124,7 @@ authServer.post('/phone', async (req, res) => {
             const hashPassCode = bcrypt.hashSync(passCode, 10);
             const passcode = new PassCode({ phoneNumb: phoneNumb, hashPassCode: hashPassCode });
             await passcode.save();
-            setTimeout(deleteSendCode, 1000 * 5, phoneNumb, hashPassCode);
+            setTimeout(deleteSendCode, 1000 * 120, phoneNumb, hashPassCode);
             return res.json({ exist: false, phoneNumb: phoneNumb});
         });
         //должно быть все тут
