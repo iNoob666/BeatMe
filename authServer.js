@@ -8,6 +8,7 @@ const bodyParser = require('body-parser');
 const https = require('https');
 const fs = require('fs');
 const { check, validationResult } = require("express-validator");
+const smsc = require('./external libs/smsc_api');
 
 //https config
 const { CertificateKey } = require('./config/keys');
@@ -16,6 +17,10 @@ const options = {
     cert: fs.readFileSync('certificate/beatme_online.full.crt', 'utf8'),
     passphrase: CertificateKey
 };
+
+smsc.test((err) => {
+    if (err) return console.log('error: ' + err);
+});
 
 //DB schemas
 const User = require('./models/user');
@@ -76,31 +81,56 @@ authServer.post('/token', async (req, res) => {
                 return res.json({message: "Обновляющий токен не прошел верификацию"});
             }
             const accessToken = generateAccessToken(user._id, user.roles);
-            res.json({accessToken: accessToken});
+            return res.json({accessToken: accessToken});
         });
     }
     catch (err){
         console.log(err);
-        res.json({message: "Не удалось обновить токен"});
+        return res.json({message: "Не удалось обновить токен"});
     }
 });
 
+async function deleteSendCode(phoneNumb, hashPassCode){
+    await PassCode.findOneAndDelete({phoneNumb: phoneNumb, hashPassCode: hashPassCode});
+}
+
 authServer.post('/phone', async (req, res) => {
     const { phoneNumb } = req.body;
-    const user = await User.findOne({ phoneNumb: phoneNumb });
+    const user = await User.findOne({ 'socialAccount.identity': phoneNumb });
     if(!user){
         //Если пользователь не существует
-        //отправка смс с кодом
+        //проверка баланса
+        smsc.get_balance(async function (balance, raw, err, code) {
+            if (err){
+                return console.log(err, 'code: '+code);
+            }
+            console.log(balance);
+            //генерация кода
+            const newPhoneNumb = phoneNumb.slice(1);
+            const passCode = String(Math.floor(Math.random()*10000));
+            //отправка смс с кодом
+            smsc.send_sms({
+                phones : [newPhoneNumb],
+                mes : passCode
+            }, function (data, raw, err, code) {
+                if (err){
+                    //errors = true;
+                    return console.log(err, 'code: '+code);
+                }
+                console.log(data); // object
+                console.log(raw); // string in JSON format
+            });
 
-        //заглушка
-        const passCode = "4444";
-        const hashPassCode = bcrypt.hashSync(passCode, 10);
-        const passcode = new PassCode({ phoneNumb: phoneNumb, hashPassCode: hashPassCode });
-        passcode.save();
-        res.json({ exist: false, phoneNumb: phoneNumb});
+            const hashPassCode = bcrypt.hashSync(passCode, 10);
+            const passcode = new PassCode({ phoneNumb: phoneNumb, hashPassCode: hashPassCode });
+            await passcode.save();
+            setTimeout(deleteSendCode, 1000 * 5, phoneNumb, hashPassCode);
+            return res.json({ exist: false, phoneNumb: phoneNumb});
+        });
+        //должно быть все тут
     }
     else {
-        res.json({ exist: true, phoneNumb: phoneNumb });
+        return res.json({ exist: true, phoneNumb: phoneNumb });
     }
 });
 
