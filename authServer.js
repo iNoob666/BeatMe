@@ -94,6 +94,7 @@ async function deleteSendCode(phoneNumb, hashPassCode){
     await PassCode.findOneAndDelete({phoneNumb: phoneNumb, hashPassCode: hashPassCode});
 }
 
+//Phone start
 authServer.post('/phone', async (req, res) => {
     const { phoneNumb } = req.body;
     const user = await User.findOne({ 'socialAccount.identity': phoneNumb });
@@ -177,11 +178,11 @@ authServer.post('/login', async (req, res) => {
 authServer.post('/register',[
     check("username", "invalid username")
         .trim()
-        .isLength({ min: 3, max: 16 }).withMessage('Имя пользователя должно быть от 3 до 16 знаков')
-        .matches(/^[A-Za-z\s]+$/).withMessage('Имя пользователя должно быть на Английском языке'),
+        .isLength({ min: 8, max: 20 }).withMessage('Имя пользователя должно быть от 3 до 16 знаков')
+        .matches(/^[A-Za-z0-9\s]+$/).withMessage('Имя пользователя должно быть на Английском языке'),
     check("confirmedPass")
         .trim()
-        .isLength({ min: 6, max: 32 }).withMessage('Пароль должен быть от 6 до 32 знаков')
+        .isLength({ min: 8, max: 20 }).withMessage('Пароль должен быть от 6 до 32 знаков')
         .custom(async (confirmedPass,{req}) => {
             const { password } = req.body;
             if (confirmedPass !== password) {
@@ -190,6 +191,8 @@ authServer.post('/register',[
             }
             return true;
         }).withMessage('Пароли должны совпадать')
+        //должен содержать минимум одну цифру, большую и малую буквы
+        .matches(new RegExp('^(?=.[a-z])(?=.[A-Z])(?=.*[0-9])'))
 ], async (req, res) => {
     try {
         const errors = validationResult(req);
@@ -213,6 +216,7 @@ authServer.post('/register',[
         res.json({message: "Не удалось зарегестрировать пользователя"});
     }
 });
+//Phone finish
 
 authServer.delete('/logout', async (req, res) => {
     const { refreshToken } = req.body;
@@ -225,7 +229,10 @@ authServer.delete('/logout', async (req, res) => {
     });
 });
 
+
+//Social start
 authServer.use('/auth', require('./routes/auth/google'));
+authServer.use('/auth', require('./routes/auth/vk'));
 
 authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
     const { email, username } = req.body;
@@ -236,6 +243,7 @@ authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
     await newToken.save();
     return res.json({accessToken: accessToken, refreshToken: refreshToken});
 });
+//Social finish
 
 const httpsServer = https.createServer(options, authServer);
 httpsServer.listen(Number(PORT), () => {
