@@ -1,18 +1,15 @@
 const express = require('express');
 const router = express.Router();
-const { OAuth2Client } = require('google-auth-library');
+const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
-const User = require('../../models/user');
-const Role = require('../../models/role');
-const Token = require('../../models/token');
-
+//secret
 const { TokenSecret } = require('../../config/keys');
 
-const GOOGLE_CLIENT_ID = '745917081582-981ajg99v9nitkoknac51sl8novc6lu4.apps.googleusercontent.com';
-
-const client = new OAuth2Client(GOOGLE_CLIENT_ID);
-
+//models
+const User = require('../../models/user');
+const Token = require('../../models/token');
+const Role = require('../../models/role');
 
 function generateAccessToken(id, roles){
     const payload = {
@@ -30,17 +27,13 @@ function generateRefreshToken(id, roles){
     return jwt.sign(payload, TokenSecret);
 }
 
-router.post('/google', (req, res) =>{
-    const { idToken } = req.body;
-
-    console.log(idToken);
-
-    client.verifyIdToken({idToken: idToken, audience: GOOGLE_CLIENT_ID})
-        .then(async (result) => {
-            const { email_verified, email } = result.payload;
-            if(email_verified){
-                const user = await User.findOne( { 'socialAccount.identity': email });
-                if(user){
+router.get('/facebook', (req, res) => {
+    try {
+        const token = req.body.token;
+        axios.get(`https://graph.facebook.com/v3.2/me?fields=email&access_token=${token}`).then(async function (response) {
+                const email = response.data.email;
+                const user = await User.find({'socialAccount.identity': email});
+                if (user) {
                     const accessToken = generateAccessToken(user._id, user.roles);
                     const refreshToken = generateRefreshToken(user._id, user.roles);
                     const newToken = new Token({token: refreshToken});
@@ -49,12 +42,15 @@ router.post('/google', (req, res) =>{
                 }
                 else {
                     const userRole = await Role.findOne({value: "USER"});
-                    const newUser = new User({ username: email, socialAccount: { type: "google", identity: email}, roles:[userRole.value]});
+                    const newUser = new User({ username: email, socialAccount: { type: "facebook", identity: email}, roles:[userRole.value]});
                     await newUser.save();
                     return res.json({ email: email });
                 }
-            }
-        })
+            });
+    }
+    catch (e){
+        return res.json({ message: e });
+    }
 });
 
 module.exports = router;

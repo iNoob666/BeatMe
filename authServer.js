@@ -232,7 +232,7 @@ authServer.delete('/logout', async (req, res) => {
 
 //Social start
 authServer.use('/auth', require('./routes/auth/google'));
-authServer.use('/auth', require('./routes/auth/vk'));
+authServer.use('/auth', require('./routes/auth/facebook'));
 
 authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
     const { email, username } = req.body;
