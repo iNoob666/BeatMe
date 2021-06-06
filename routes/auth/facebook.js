@@ -32,8 +32,8 @@ router.post('/facebook', (req, res) => {
         const { token } = req.body;
         axios.get(`https://graph.facebook.com/v3.2/me?fields=email&access_token=${token}`)
             .then(async function (response) {
-                const { email } = response.data;
-                const user = await User.find({'socialAccount.identity': email});
+                const email = response.data.email;
+                const user = await User.findOne({'socialAccount.identity': email});
                 if (user) {
                     const accessToken = generateAccessToken(user._id, user.roles);
                     const refreshToken = generateRefreshToken(user._id, user.roles);
@@ -47,7 +47,7 @@ router.post('/facebook', (req, res) => {
                     await newUser.save();
                     return res.json({ email: email });
                 }
-            })
+            }.bind(res))
             .catch( (err) => {
                 return res.json({ message: "Не удалось зарегестрировать пользователя через facebook"});
             })
