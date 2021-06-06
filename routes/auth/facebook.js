@@ -27,11 +27,12 @@ function generateRefreshToken(id, roles){
     return jwt.sign(payload, TokenSecret);
 }
 
-router.get('/facebook', (req, res) => {
+router.post('/facebook', (req, res) => {
     try {
-        const token = req.body.token;
-        axios.get(`https://graph.facebook.com/v3.2/me?fields=email&access_token=${token}`).then(async function (response) {
-                const email = response.data.email;
+        const { token } = req.body;
+        axios.get(`https://graph.facebook.com/v3.2/me?fields=email&access_token=${token}`)
+            .then(async function (response) {
+                const { email } = response.data;
                 const user = await User.find({'socialAccount.identity': email});
                 if (user) {
                     const accessToken = generateAccessToken(user._id, user.roles);
@@ -46,7 +47,10 @@ router.get('/facebook', (req, res) => {
                     await newUser.save();
                     return res.json({ email: email });
                 }
-            });
+            })
+            .catch( (err) => {
+                return res.json({ message: "Не удалось зарегестрировать пользователя через facebook"});
+            })
     }
     catch (e){
         return res.json({ message: e });
