@@ -39,8 +39,8 @@ router.post('/vk', (req, res) => {
             .then(function (response){
                 console.log("ЗАПРОС: ", `https://oauth.vk.com/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&redirect_uri=${REDIRECT_URI}&code=${code}`);
                 console.log("ACCESS TOKEN response: ", response.data);
-                const { token } = response.data;
-                axios.get(`https://api.vk.com/method/users.get?access_token=${token}&v=5.131`)
+                const { access_token } = response.data;
+                axios.get(`https://api.vk.com/method/users.get?access_token=${access_token}&v=5.131`)
                     .then(async function (response){
                         console.log("USERID response: ", response.data);
                         const { id } = response.data;
