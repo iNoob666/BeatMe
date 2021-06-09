@@ -221,11 +221,13 @@ authServer.post('/register',[
 authServer.delete('/logout', async (req, res) => {
     const { refreshToken } = req.body;
 
-    await Token.deleteOne({token: refreshToken}, (err) => {
+    await Token.deleteOne({token: refreshToken}, (err, result) => {
         if(err) {
-            return res.json({ message: "неверный токен" });
+            return res.json({ message: err });
         }
-        res.sendStatus(200);
+        else {
+            res.sendStatus(200);
+        }
     });
 });
 
@@ -233,6 +235,7 @@ authServer.delete('/logout', async (req, res) => {
 //Social start
 authServer.use('/auth', require('./routes/auth/google'));
 authServer.use('/auth', require('./routes/auth/facebook'));
+authServer.use('/auth', require('./routes/auth/vk'));
 
 authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
     const { email, username } = req.body;
