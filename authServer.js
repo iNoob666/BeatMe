@@ -239,8 +239,8 @@ authServer.use('/auth', require('./routes/auth/vk'));
 authServer.use('/auth', require('./routes/auth/instagram'));
 
 authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
-    const { email, username } = req.body;
-    const user = await User.findOneAndUpdate({ 'socialAccount.identity': email }, {username: username}, { new: true });
+    const { identity, username } = req.body;
+    const user = await User.findOneAndUpdate({ 'socialAccount.identity': identity }, {username: username}, { new: true });
     const accessToken = generateAccessToken(user._id, user.roles);
     const refreshToken = generateRefreshToken(user._id, user.roles);
     const newToken = new Token({token: refreshToken});

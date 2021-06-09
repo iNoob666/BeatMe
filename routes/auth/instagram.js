@@ -47,7 +47,7 @@ router.post('/instagram', (req, res) => {
                     const userRole = await Role.findOne({value: "USER"});
                     const newUser = new User({ username: id, socialAccount: { type: "instagram", identity: id}, roles:[userRole.value]});
                     await newUser.save();
-                    return res.json({ email: id });
+                    return res.json({ identity: id });
                 }
             }.bind(res))
             .catch((err) => {

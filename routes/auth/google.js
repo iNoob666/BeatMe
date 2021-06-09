@@ -51,7 +51,7 @@ router.post('/google', (req, res) =>{
                     const userRole = await Role.findOne({value: "USER"});
                     const newUser = new User({ username: email, socialAccount: { type: "google", identity: email}, roles:[userRole.value]});
                     await newUser.save();
-                    return res.json({ email: email });
+                    return res.json({ identity: email });
                 }
             }
         })

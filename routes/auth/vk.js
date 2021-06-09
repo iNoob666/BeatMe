@@ -37,14 +37,10 @@ router.post('/vk', (req, res) => {
         const { code } = req.body;
         axios.get(`https://oauth.vk.com/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&redirect_uri=${REDIRECT_URI}&code=${code}`)
             .then(function (response){
-                console.log("ЗАПРОС: ", `https://oauth.vk.com/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&redirect_uri=${REDIRECT_URI}&code=${code}`);
-                console.log("ACCESS TOKEN response: ", response.data);
                 const { access_token } = response.data;
                 axios.get(`https://api.vk.com/method/users.get?access_token=${access_token}&v=5.131`)
                     .then(async function (response){
-                        console.log("USERID response: ", response.data.response[0]);
                         const { id } = response.data.response[0];
-                        console.log("USERID id: ", id);
                         const user = await User.findOne({'socialAccount.identity': id});
                         if (user) {
                             const accessToken = generateAccessToken(user._id, user.roles);
@@ -57,7 +53,7 @@ router.post('/vk', (req, res) => {
                             const userRole = await Role.findOne({value: "USER"});
                             const newUser = new User({ username: id, socialAccount: { type: "vk", identity: id}, roles:[userRole.value]});
                             await newUser.save();
-                            return res.json({ id: id });
+                            return res.json({ identity: id });
                         }
                     }.bind(res))
                     .catch((err) => {
