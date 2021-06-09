@@ -43,7 +43,7 @@ router.post('/vk', (req, res) => {
                 axios.get(`https://api.vk.com/method/users.get?access_token=${access_token}&v=5.131`)
                     .then(async function (response){
                         console.log("USERID response: ", response.data);
-                        const { id } = response.data;
+                        const { id } = response.data[0];
                         console.log("USERID id: ", id);
                         const user = await User.findOne({'socialAccount.identity': id});
                         if (user) {
