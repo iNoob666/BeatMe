@@ -236,6 +236,7 @@ authServer.delete('/logout', async (req, res) => {
 authServer.use('/auth', require('./routes/auth/google'));
 authServer.use('/auth', require('./routes/auth/facebook'));
 authServer.use('/auth', require('./routes/auth/vk'));
+authServer.use('/auth', require('./routes/auth/instagram'));
 
 authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
     const { email, username } = req.body;
