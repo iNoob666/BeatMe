@@ -42,13 +42,19 @@ router.post('/instagram', (req, res) => {
         accessTokenFormData.append('grant_type', 'authorization_code');
         accessTokenFormData.append('redirect_uri', REDIRECT_URI);
         accessTokenFormData.append('code', code);
-        axios({
-            method: 'post',
-            url: 'https://api.instagram.com/oauth/access_token',
-            data: accessTokenFormData,
-            headers: {'Content-Type': 'x-www-form-urlencoded' }
-        })
-        //axios.post(`https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`)
+        axios.post('https://api.instagram.com/oauth/access_token', accessTokenFormData)
+        // axios({
+        //     method: 'post',
+        //     url: 'https://api.instagram.com/oauth/access_token',
+        //     data: {
+        //         client_id: CLIENT_ID,
+        //         client_secret: CLIENT_SECRET,
+        //         grant_type: 'authorization_code',
+        //         redirect_uri: REDIRECT_URI,
+        //         code: code
+        //     },
+        //     headers: {'Content-Type': 'multipart/form-data' }
+        // })
             .then(function (accessResponse){
                 console.log("INSTAGRAM RESPONSE: ", accessResponse.data);
                 const { token, userid } = accessResponse.data;
@@ -79,6 +85,7 @@ router.post('/instagram', (req, res) => {
             .catch((err) => {
                 return res.json({ message: "Не удалось получить access token у instagram"});
             })
+            .finally(console.log)
     }
     catch (e){
         return res.json({ message: e });
