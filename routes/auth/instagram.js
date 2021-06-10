@@ -4,9 +4,9 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
 //const
-const CLIENT_ID = 123;
-const CLIENT_SECRET = '';
-const REDIRECT_URI = '';
+const CLIENT_ID = 546923653380217;
+const CLIENT_SECRET = '63936ecb13fc8e66f06ea766ea09d4e8';
+const REDIRECT_URI = 'https://beatme.online';
 
 //secret
 const { TokenSecret } = require('../../config/keys');

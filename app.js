@@ -26,7 +26,7 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use('/', require('./routes/privacy'));
 
 app.get('/', (req, res) => {
-    return res.sendStatus(200);
+    return res.send('').sendStatus(200);
 })
 
 const httpsServer = https.createServer(options, app);
