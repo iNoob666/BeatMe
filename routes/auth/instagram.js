@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 //const
 const CLIENT_ID = 546923653380217;
 const CLIENT_SECRET = '63936ecb13fc8e66f06ea766ea09d4e8';
-const REDIRECT_URI = 'https://beatme.online';
+const REDIRECT_URI = 'https://beatme.online/';
 
 //secret
 const { TokenSecret } = require('../../config/keys');
@@ -35,6 +35,8 @@ function generateRefreshToken(id, roles){
 router.post('/instagram', (req, res) => {
     try {
         const { code } = req.body;
+        console.log("CODE: ", code);
+        console.log("URL: ", `https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`);
         axios.post(`https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`)
             .then(function (accessResponse){
                 console.log("INSTAGRAM RESPONSE: ", accessResponse.data);
