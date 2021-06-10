@@ -42,7 +42,9 @@ router.post('/instagram', (req, res) => {
                     grant_type: 'authorization_code',
                     redirect_uri: REDIRECT_URI,
                     code: code
-                })
+                }, {
+            headers: {'Content-Type': 'multipart/form-data' }
+        })
         // axios({
         //     method: 'post',
         //     url: 'https://api.instagram.com/oauth/access_token',
