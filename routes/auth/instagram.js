@@ -36,8 +36,18 @@ router.post('/instagram', (req, res) => {
     try {
         const { code } = req.body;
         console.log("CODE: ", code);
-        console.log("URL: ", `https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`);
-        axios.post(`https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`)
+        axios({
+            method: 'post',
+            url: 'https://api.instagram.com/oauth/access_token',
+            data: {
+                client_id: CLIENT_ID,
+                client_secret: CLIENT_SECRET,
+                grant_type: 'authorization_code',
+                redirect_uri: REDIRECT_URI,
+                code: code
+            }
+        })
+        //axios.post(`https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`)
             .then(function (accessResponse){
                 console.log("INSTAGRAM RESPONSE: ", accessResponse.data);
                 const { token, userid } = accessResponse.data;
