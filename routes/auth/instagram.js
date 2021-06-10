@@ -3,6 +3,11 @@ const router = express.Router();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
+//const
+const CLIENT_ID = 123;
+const CLIENT_SECRET = '';
+const REDIRECT_URI = '';
+
 //secret
 const { TokenSecret } = require('../../config/keys');
 
@@ -29,29 +34,37 @@ function generateRefreshToken(id, roles){
 
 router.post('/instagram', (req, res) => {
     try {
-        const { token, userid } = req.body;
-        axios.get(`https://graph.instagram.com/${userid}?fields=id&access_token=${token}`)
-            .then(async function (response){
-                console.log("response: ", response.data);
-                const { id } = response.data;
-                console.log("id: ", id);
-                const user = await User.findOne({'socialAccount.identity': id});
-                if (user) {
-                    const accessToken = generateAccessToken(user._id, user.roles);
-                    const refreshToken = generateRefreshToken(user._id, user.roles);
-                    const newToken = new Token({token: refreshToken});
-                    await newToken.save();
-                    return res.json({accessToken: accessToken, refreshToken: refreshToken});
-                }
-                else {
-                    const userRole = await Role.findOne({value: "USER"});
-                    const newUser = new User({ username: id, socialAccount: { type: "instagram", identity: id}, roles:[userRole.value]});
-                    await newUser.save();
-                    return res.json({ identity: id });
-                }
+        const { code } = req.body;
+        axios.post(`https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`)
+            .then(function (accessResponse){
+                console.log("INSTAGRAM RESPONSE: ", accessResponse.data);
+                const { token, userid } = accessResponse.data;
+                axios.get(`https://graph.instagram.com/${userid}?fields=id&access_token=${token}`)
+                    .then(async function (response){
+                        console.log("response: ", response.data);
+                        const { id } = response.data;
+                        console.log("id: ", id);
+                        const user = await User.findOne({'socialAccount.identity': id});
+                        if (user) {
+                            const accessToken = generateAccessToken(user._id, user.roles);
+                            const refreshToken = generateRefreshToken(user._id, user.roles);
+                            const newToken = new Token({token: refreshToken});
+                            await newToken.save();
+                            return res.json({accessToken: accessToken, refreshToken: refreshToken});
+                        }
+                        else {
+                            const userRole = await Role.findOne({value: "USER"});
+                            const newUser = new User({ username: id, socialAccount: { type: "instagram", identity: id}, roles:[userRole.value]});
+                            await newUser.save();
+                            return res.json({ identity: id });
+                        }
+                    }.bind(res))
+                    .catch((err) => {
+                        return res.json({ message: "Не удалось зарегестрировать пользователя через instagram"});
+                    })
             }.bind(res))
             .catch((err) => {
-                return res.json({ message: "Не удалось зарегестрировать пользователя через ВК"});
+                return res.json({ message: "Не удалось получить access token у instagram"});
             })
     }
     catch (e){
