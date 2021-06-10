@@ -4,7 +4,7 @@ const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
 //const
-const CLIENT_ID = 546923653380217;
+const CLIENT_ID = '546923653380217';
 const CLIENT_SECRET = '63936ecb13fc8e66f06ea766ea09d4e8';
 const REDIRECT_URI = 'https://beatme.online/';
 
@@ -36,16 +36,17 @@ router.post('/instagram', (req, res) => {
     try {
         const { code } = req.body;
         console.log("CODE: ", code);
+        const accessTokenFormData = new FormData();
+        accessTokenFormData.append('client_id', CLIENT_ID);
+        accessTokenFormData.append('client_secret', CLIENT_SECRET);
+        accessTokenFormData.append('grant_type', 'authorization_code');
+        accessTokenFormData.append('redirect_uri', REDIRECT_URI);
+        accessTokenFormData.append('code', code);
         axios({
             method: 'post',
             url: 'https://api.instagram.com/oauth/access_token',
-            data: {
-                client_id: CLIENT_ID,
-                client_secret: CLIENT_SECRET,
-                grant_type: 'authorization_code',
-                redirect_uri: REDIRECT_URI,
-                code: code
-            }
+            data: accessTokenFormData,
+            headers: {'Content-Type': 'x-www-form-urlencoded' }
         })
         //axios.post(`https://api.instagram.com/oauth/access_token?client_id=${CLIENT_ID}&client_secret=${CLIENT_SECRET}&grant_type=authorization_code&redirect_uri=${REDIRECT_URI}&code=${code}`)
             .then(function (accessResponse){
