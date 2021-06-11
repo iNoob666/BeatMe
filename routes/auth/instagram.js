@@ -40,14 +40,19 @@ router.post('/instagram', (req, res) => {
     try {
         const { code } = req.body;
         console.log("CODE: ", code);
-        let formData = new FormData();
-
-        formData.append('client_id', CLIENT_ID);
-        formData.append('client_secret', CLIENT_SECRET);
-        formData.append('grant_type', 'authorization_code');
-        formData.append('redirect_uri', REDIRECT_URI);
-        formData.append('code', code);
-        axios.post('https://api.instagram.com/oauth/access_token', formData, {
+        // let formData = new FormData();
+        //
+        // formData.append('client_id', CLIENT_ID);
+        // formData.append('client_secret', CLIENT_SECRET);
+        // formData.append('grant_type', 'authorization_code');
+        // formData.append('redirect_uri', REDIRECT_URI);
+        // formData.append('code', code);
+        axios.post('https://api.instagram.com/oauth/access_token',
+            {data: {client_id: CLIENT_ID,
+                        client_secret: CLIENT_SECRET,
+                        grant_type: 'authorization_code',
+                        redirect_uri: REDIRECT_URI,
+                        code: code}} , {
             headers: {'Content-Type': 'multipart/form-data' }
         })
         // axios({
