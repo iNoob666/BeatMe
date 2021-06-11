@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
+const queryString = require('query-string');
 
 const multer = require('multer');
 const upload = multer();
@@ -39,42 +40,21 @@ function generateRefreshToken(id, roles){
 router.post('/instagram', (req, res) => {
     try {
         const { code } = req.body;
-        console.log("CODE: ", code);
-        // let formData = new FormData();
-        //
-        // formData.append('client_id', CLIENT_ID);
-        // formData.append('client_secret', CLIENT_SECRET);
-        // formData.append('grant_type', 'authorization_code');
-        // formData.append('redirect_uri', REDIRECT_URI);
-        // formData.append('code', code);
         axios.post('https://api.instagram.com/oauth/access_token',
-            {data: {client_id: CLIENT_ID,
-                        client_secret: CLIENT_SECRET,
-                        grant_type: 'authorization_code',
-                        redirect_uri: REDIRECT_URI,
-                        code: code}} , {
+            queryString.stringify({client_id: CLIENT_ID,
+                client_secret: CLIENT_SECRET,
+                grant_type: 'authorization_code',
+                redirect_uri: REDIRECT_URI,
+                code: code}), {
             headers: {'Content-Type': 'multipart/form-data' }
         })
-        // axios({
-        //     method: 'post',
-        //     url: 'https://api.instagram.com/oauth/access_token',
-        //     data: {
-        //         client_id: CLIENT_ID,
-        //         client_secret: CLIENT_SECRET,
-        //         grant_type: 'authorization_code',
-        //         redirect_uri: REDIRECT_URI,
-        //         code: code
-        //     },
-        //     headers: {'Content-Type': 'multipart/form-data' }
-        // })
             .then(function (accessResponse){
-                console.log("INSTAGRAM RESPONSE: ", accessResponse.data);
-                const { token, userid } = accessResponse.data;
-                axios.get(`https://graph.instagram.com/${userid}?fields=id&access_token=${token}`)
+                console.log("INSTAGRAM RESPONSE: ", accessResponse);
+                const { access_token, user_id } = accessResponse.data;
+                axios.get(`https://graph.instagram.com/${user_id}?fields=id&access_token=${access_token}`)
                     .then(async function (response){
-                        console.log("response: ", response.data);
+                        console.log(response);
                         const { id } = response.data;
-                        console.log("id: ", id);
                         const user = await User.findOne({'socialAccount.identity': id});
                         if (user) {
                             const accessToken = generateAccessToken(user._id, user.roles);
