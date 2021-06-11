@@ -3,6 +3,10 @@ const router = express.Router();
 const axios = require('axios');
 const jwt = require('jsonwebtoken');
 
+const multer = require('multer');
+const upload = multer();
+router.use(upload.array());
+
 //const
 const CLIENT_ID = '546923653380217';
 const CLIENT_SECRET = '63936ecb13fc8e66f06ea766ea09d4e8';
@@ -44,7 +48,7 @@ router.post('/instagram', (req, res) => {
         formData.append('redirect_uri', REDIRECT_URI);
         formData.append('code', code);
         axios.post('https://api.instagram.com/oauth/access_token', formData, {
-            headers: {'Content-Type': 'application/x-www-form-urlencoded' }
+            headers: {'Content-Type': 'multipart/form-data' }
         })
         // axios({
         //     method: 'post',
