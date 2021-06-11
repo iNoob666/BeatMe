@@ -36,6 +36,7 @@ router.post('/instagram', (req, res) => {
     try {
         const { code } = req.body;
         console.log("CODE: ", code);
+
         axios.post('https://api.instagram.com/oauth/access_token', {
                     client_id: CLIENT_ID,
                     client_secret: CLIENT_SECRET,
@@ -43,7 +44,7 @@ router.post('/instagram', (req, res) => {
                     redirect_uri: REDIRECT_URI,
                     code: code
                 }, {
-            headers: {'Content-Type': 'multipart/form-data' }
+            headers: {'Content-Type': 'application/x-www-form-urlencoded' }
         })
         // axios({
         //     method: 'post',
