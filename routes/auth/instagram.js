@@ -46,7 +46,7 @@ router.post('/instagram', (req, res) => {
                 grant_type: 'authorization_code',
                 redirect_uri: REDIRECT_URI,
                 code: code}), {
-            headers: {'Content-Type': 'multipart/form-data' }
+            headers: {'Content-Type': 'application/x-www-form-urlencoded' }
         })
             .then(function (accessResponse){
                 console.log("INSTAGRAM RESPONSE: ", accessResponse);

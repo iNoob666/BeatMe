@@ -167,7 +167,7 @@ authServer.post('/login', async (req, res) => {
         const refreshToken = generateRefreshToken(user._id, user.roles);
         const newToken = new Token({token: refreshToken});
         await newToken.save();
-        res.json({accessToken: accessToken, refreshToken: refreshToken})
+        res.json({accessToken: accessToken, refreshToken: refreshToken, username: user.username })
     }
     catch (err){
         console.log(err);
