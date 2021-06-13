@@ -240,6 +240,10 @@ authServer.use('/auth', require('./routes/auth/instagram'));
 
 authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
     const { identity, username } = req.body;
+    const existUsername = await  User.findOne({ username: username });
+    if(existUsername){
+        return res.json({message: "Пользователь с таким именем уже существует"});
+    }
     const user = await User.findOneAndUpdate({ 'socialAccount.identity': identity }, {username: username}, { new: true });
     const accessToken = generateAccessToken(user._id, user.roles);
     const refreshToken = generateRefreshToken(user._id, user.roles);
