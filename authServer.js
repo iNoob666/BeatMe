@@ -239,14 +239,18 @@ authServer.use('/auth', require('./routes/auth/vk'));
 authServer.use('/auth', require('./routes/auth/instagram'));
 
 authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
-    const { identity, username } = req.body;
+    const { identity, username, type } = req.body;
     const existUsername = await  User.findOne({ username: username });
     if(existUsername){
         return res.json({message: "Пользователь с таким именем уже существует"});
     }
-    const user = await User.findOneAndUpdate({ 'socialAccount.identity': identity }, {username: username}, { new: true });
-    const accessToken = generateAccessToken(user._id, user.roles);
-    const refreshToken = generateRefreshToken(user._id, user.roles);
+    const userRole = await Role.findOne({value: "USER"});
+    const newUser = new User({ username: username, socialAccount: { type: type , identity: identity}, roles:[userRole.value]});
+    await newUser.save();
+    
+    const newUserID = User.findOne({ username: username});
+    const accessToken = generateAccessToken(newUserID._id, newUserID.roles);
+    const refreshToken = generateRefreshToken(newUserID._id, newUserID.roles);
     const newToken = new Token({token: refreshToken});
     await newToken.save();
     return res.json({accessToken: accessToken, refreshToken: refreshToken});

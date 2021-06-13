@@ -50,10 +50,7 @@ router.post('/vk', (req, res) => {
                             return res.json({accessToken: accessToken, refreshToken: refreshToken, username: user.username});
                         }
                         else {
-                            const userRole = await Role.findOne({value: "USER"});
-                            const newUser = new User({ username: id, socialAccount: { type: "vk", identity: id}, roles:[userRole.value]});
-                            await newUser.save();
-                            return res.json({ identity: id });
+                            return res.json({ identity: id, type: "vk" });
                         }
                     }.bind(res))
                     .catch((err) => {

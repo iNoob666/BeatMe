@@ -64,10 +64,7 @@ router.post('/instagram', (req, res) => {
                             return res.json({accessToken: accessToken, refreshToken: refreshToken, username: user.username});
                         }
                         else {
-                            const userRole = await Role.findOne({value: "USER"});
-                            const newUser = new User({ username: id, socialAccount: { type: "instagram", identity: id}, roles:[userRole.value]});
-                            await newUser.save();
-                            return res.json({ identity: id });
+                            return res.json({ identity: id, type: "instagram" });
                         }
                     }.bind(res))
                     .catch((err) => {
