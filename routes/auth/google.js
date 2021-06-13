@@ -45,7 +45,7 @@ router.post('/google', (req, res) =>{
                     const refreshToken = generateRefreshToken(user._id, user.roles);
                     const newToken = new Token({token: refreshToken});
                     await newToken.save();
-                    return res.json({accessToken: accessToken, refreshToken: refreshToken});
+                    return res.json({accessToken: accessToken, refreshToken: refreshToken, username: user.username});
                 }
                 else {
                     const userRole = await Role.findOne({value: "USER"});
