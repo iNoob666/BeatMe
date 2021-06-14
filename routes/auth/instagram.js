@@ -50,11 +50,7 @@ router.post('/instagram', (req, res) => {
         })
             .then(function (accessResponse){
                 const { access_token, user_id } = accessResponse.data;
-                axios.get(`https://graph.instagram.com/${user_id}?fields=id&access_token=${access_token}`,
-                    {
-                        headers: {'Content-Type': 'application/x-www-form-urlencoded' }
-                    })
-                //axios.get(`https://graph.instagram.com/${user_id}?fields=id&access_token=${access_token}`)
+                axios.get(`https://graph.instagram.com/me?fields=id&access_token=${access_token}`)
                     .then(async function (response){
                         const { id } = response.data;
                         const user = await User.findOne({'socialAccount.identity': id});
@@ -66,19 +62,16 @@ router.post('/instagram', (req, res) => {
                             return res.json({accessToken: accessToken, refreshToken: refreshToken, username: user.username});
                         }
                         else {
-                            console.log(err);
                             return res.json({ identity: id, type: "instagram" });
                         }
                     }.bind(res))
                     .catch((err) => {
-                        console.log(err);
                         return res.json({ message: "Не удалось зарегестрировать пользователя через instagram"});
                     })
             }.bind(res))
             .catch((err) => {
                 return res.json({ message: "Не удалось получить access token у instagram"});
             })
-            .finally(console.log)
     }
     catch (e){
         return res.json({ message: e });
