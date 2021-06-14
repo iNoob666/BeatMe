@@ -238,7 +238,7 @@ authServer.use('/auth', require('./routes/auth/facebook'));
 authServer.use('/auth', require('./routes/auth/vk'));
 authServer.use('/auth', require('./routes/auth/instagram'));
 
-authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
+authServer.post('/auth/createUsernameSocialMedia', async (req, res) => {
     const { identity, username, type } = req.body;
     const existUsername = await  User.findOne({ username: username });
     if(existUsername){
@@ -247,7 +247,7 @@ authServer.put('/auth/createUsernameSocialMedia', async (req, res) => {
     const userRole = await Role.findOne({value: "USER"});
     const newUser = new User({ username: username, socialAccount: { type: type , identity: identity}, roles:[userRole.value]});
     await newUser.save();
-    
+
     const newUserID = User.findOne({ username: username});
     const accessToken = generateAccessToken(newUserID._id, newUserID.roles);
     const refreshToken = generateRefreshToken(newUserID._id, newUserID.roles);

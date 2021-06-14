@@ -33,8 +33,6 @@ function generateRefreshToken(id, roles){
 router.post('/google', (req, res) =>{
     const { idToken } = req.body;
 
-    console.log(idToken);
-
     client.verifyIdToken({idToken: idToken, audience: GOOGLE_CLIENT_ID})
         .then(async (result) => {
             const { email_verified, email } = result.payload;
